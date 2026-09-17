@@ -88,6 +88,8 @@ async def create_report(report: FieldReport):
     target = next((route for route in routes if route["state"] == report.state), routes[0])
     target["risk"] = min(98, target["risk"] + bump)
     target["incidents"] += 1
+    incidents.insert(0, {"state": report.state, "type": report.incident_type, "severity": report.severity,
+                         "time": "just now", "location": [report.latitude, report.longitude]})
     for vehicle in vehicles:
         if vehicle["state"] == report.state and vehicle["status"] != "delivered":
             vehicle["status"] = "rerouted"
