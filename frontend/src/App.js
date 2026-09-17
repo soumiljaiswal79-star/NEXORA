@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import "@/App.css";
 import axios from "axios";
 import { MapContainer, TileLayer, Polyline, CircleMarker, Popup, useMap } from "react-leaflet";
@@ -14,9 +14,9 @@ const riskColor = (risk) => risk > 60 ? "#f43f5e" : risk > 35 ? "#f59e0b" : "#10
 function Recenter({ position }) { const map = useMap(); useEffect(() => { map.setView(position, 7); }, [map, position]); return null; }
 
 const Home = () => {
-  const [data, setData] = useState(null); const [lang, setLang] = useState("en"); const [state, setState] = useState("All states"); const [role, setRole] = useState("Logistics manager"); const [showReport, setShowReport] = useState(false); const [toast, setToast] = useState(""); const [form, setForm] = useState({ incident_type:"Landslide", severity:"High", state:"Assam", notes:"", latitude:25.57, longitude:91.88, image_data:null });
+  const [data, setData] = useState(null); const [lang, setLang] = useState("en"); const [state, setState] = useState("All states"); const [role, setRole] = useState("Logistics manager"); const [showReport, setShowReport] = useState(false); const [toast, setToast] = useState(""); const [form, setForm] = useState({ incident_type:"Landslide", severity:"High", state:"Assam", notes:"", latitude:25.57, longitude:91.88, image_data:null }); const requestVersion = useRef(0);
   const t = copy[lang];
-  const load = async () => { try { const result = await axios.get(`${API}/overview`); setData(result.data); } catch { setToast("Unable to reach the demo service"); } };
+  const load = async () => { const version = ++requestVersion.current; try { const result = await axios.get(`${API}/overview`); if (version === requestVersion.current) setData(result.data); } catch { setToast("Unable to reach the demo service"); } };
   useEffect(() => { load(); const timer = setInterval(load, 30000); return () => clearInterval(timer); }, []);
   const filteredRoutes = useMemo(() => data?.routes.filter(r => state === "All states" || r.state === state) || [], [data, state]);
   const filteredVehicles = useMemo(() => data?.vehicles.filter(v => state === "All states" || v.state === state) || [], [data, state]);
