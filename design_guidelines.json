@@ -1,0 +1,74 @@
+{
+  "app_name": "NER Smart Logistics & Accessibility Intelligence Platform (NE-LOGIX)",
+  "version": "1.0.0",
+  "archetype": "ORGANIC & EARTHY / TACTICAL DASHBOARD",
+  "theme": "dark-tactical",
+  "typography": {
+    "heading": "Outfit, sans-serif",
+    "body": "Plus Jakarta Sans, sans-serif",
+    "mono": "JetBrains Mono, monospace"
+  },
+  "colors": {
+    "primary": "#0F172A",
+    "accent_orange": "#F97316",
+    "accent_emerald": "#10B981",
+    "accent_rose": "#F43F5E",
+    "surface": "#1E293B",
+    "background": "#090D16",
+    "text_primary": "#F8FAFC",
+    "text_muted": "#94A3B8",
+    "border_subtle": "rgba(255, 255, 255, 0.08)"
+  },
+  "visual_enhancers": {
+    "glass_blur": "backdrop-blur-xl bg-slate-900/80",
+    "borders": "border border-white/10",
+    "shadows": "shadow-[0_8px_32px_rgba(0,0,0,0.37)]",
+    "tactical_glow": "shadow-[0_0_15px_rgba(249,115,22,0.2)]"
+  },
+  "grids": {
+    "dashboard_grid": "grid grid-cols-1 md:grid-cols-12 gap-6",
+    "map_span": "col-span-full lg:col-span-8",
+    "sidebar_span": "col-span-full lg:col-span-4"
+  },
+  "layouts": {
+    "container": "max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6",
+    "header": "sticky top-0 z-50 backdrop-blur-xl bg-slate-950/90 border-b border-white/10"
+  },
+  "motion": {
+    "transition_standard": "transition-all duration-300 ease-in-out",
+    "hover_lift": "hover:-translate-y-0.5 hover:shadow-lg"
+  },
+  "accessibility": {
+    "min_contrast": "4.5:1 for normal text, 3:1 for large text",
+    "aria_labels": "MANDATORY on all interactive icon buttons and toggles",
+    "data_testid": "Required on all buttons, filters, inputs, metrics, and cards"
+  },
+  "media": {
+    "responsive_max_height": "max-h-[80vh] md:max-h-none",
+    "image_handling": "Object cover with subtle dark gradient scrims"
+  },
+  "3d_libraries": {
+    "map_engine": "Leaflet.js with custom glowing route polylines and animated markers",
+    "chart_engine": "Recharts for real-time risk spike graphs and XGBoost calibration accuracy curves"
+  },
+  "image_urls": [
+    {
+      "category": "mountain_road_hero",
+      "url": "https://images.unsplash.com/photo-1705851965879-b3120ecdc95c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwxfHxtb3VudGFpbiUyMGxhbmRzY2FwZSUyMGhpZ2h3YXklMjBub3J0aCUyMGVhc3QlMjBpbmRpYXxlbnwwfHx8fDE3ODk2NjgxOTB8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Mountain highway landscape in North East India"
+    },
+    {
+      "category": "logistics_truck",
+      "url": "https://images.pexels.com/photos/13922927/pexels-photo-13922927.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Colorful goods carrier truck in mountain terrain"
+    }
+  ],
+  "instructions_to_main_agent": "Implement NE-LOGIX (North East Region Smart Logistics & Accessibility Intelligence Platform) with a React frontend, Leaflet live map with live vehicles and risk corridors, rule-based disruption scoring + synthetic XGBoost calibration panel, field reporting modal with offline/synced state and image preview, English/Assamese multilingual toggle, role/state/payload/status filtering, and active alert simulation triggers.",
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You MUST NOT use complete transparent background in header or overlays.",
+    "All interactive elements MUST include a data-testid attribute.",
+    "Do not use Inter as heading font.",
+    "Use Generous Spacing Philosophy (p-6, p-8, gap-6).",
+    "Ensure high contrast on hover states."
+  ]
+}
