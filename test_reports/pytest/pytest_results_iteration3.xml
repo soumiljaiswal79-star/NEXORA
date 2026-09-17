@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="2" time="1.552" timestamp="2026-09-17T18:10:28.838652+00:00" hostname="agent-env-c0d8cf10-2737-42b4-81e4-253428da8950"><testcase classname="tests.test_ne_logix_api" name="test_overview_contract" time="0.340"><failure message="AssertionError: assert 8 == 5&#10; +  where 8 = len([{'state': 'Assam', 'type': 'Landslide', 'severity': 'High', 'time': 'just now', ...}, {'state': 'Assam', 'type': 'Lan... '28 min ago', ...}, {'state': 'Meghalaya', 'type': 'Landslide', 'severity': 'Medium', 'time': '41 min ago', ...}, ...])">def test_overview_contract():
+        response = requests.get(f"{BASE_URL}/api/overview", timeout=15)
+        assert response.status_code == 200
+        data = response.json()
+        assert set(data["states"]) == {"Assam", "Manipur", "Meghalaya", "Nagaland", "Mizoram"}
+        assert len(data["routes"]) == 7
+        assert len(data["vehicles"]) == 6
+&gt;       assert len(data["incidents"]) == 5
+E       AssertionError: assert 8 == 5
+E        +  where 8 = len([{'state': 'Assam', 'type': 'Landslide', 'severity': 'High', 'time': 'just now', ...}, {'state': 'Assam', 'type': 'Lan... '28 min ago', ...}, {'state': 'Meghalaya', 'type': 'Landslide', 'severity': 'Medium', 'time': '41 min ago', ...}, ...])
+
+backend/tests/test_ne_logix_api.py:14: AssertionError</failure></testcase><testcase classname="tests.test_ne_logix_api" name="test_field_report_spikes_risk_and_reroutes_vehicle" time="0.504" /></testsuite></testsuites>
