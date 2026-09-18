@@ -32,6 +32,7 @@ Build a scoped, end-to-end prototype of an AI-based Smart Logistics and Accessib
 - Leaflet map with risk-colored corridors, incident markers, vehicle markers, popups, and monsoon context.
 - Five-state mock dataset with seven corridors, six vehicles, incidents, mixed payloads, and statuses.
 - Report API that appends incidents, increases route risk, reroutes matching vehicles, and refreshes the alert feed.
+- In-map route switcher with selectable alternate corridors, a vehicle selector, and live route reassignment API.
 - English/Assamese toggle, role selector, state filters, mobile report modal, image input, and sync toast.
 - README and end-to-end regression coverage.
 
@@ -44,7 +45,6 @@ Build a scoped, end-to-end prototype of an AI-based Smart Logistics and Accessib
 
 ### P1 remaining
 
-- Add route selection controls for switching a vehicle to alternate paths.
 - Add a dedicated report history view with synced/unsynced states.
 - Add time-series risk chart for rainfall and incident changes.
 

@@ -46,6 +46,9 @@ class FieldReport(BaseModel):
     longitude: float
     image_data: Optional[str] = None
 
+class RouteSwitch(BaseModel):
+    route_id: str
+
 states = ["Assam", "Manipur", "Meghalaya", "Nagaland", "Mizoram"]
 routes = [
     {"id":"NH-27 / Guwahati–Silchar", "state":"Assam", "risk":72, "accessibility":65, "terrain":"Hills", "delay":"+2h 10m", "incidents":4, "points":[[26.14,91.74],[25.57,91.88],[24.83,92.78]]},
@@ -55,6 +58,11 @@ routes = [
     {"id":"NH-306 / Aizawl–Lunglei", "state":"Mizoram", "risk":57, "accessibility":39, "terrain":"Mountains", "delay":"+1h 05m", "incidents":3, "points":[[23.73,92.72],[23.20,92.72],[22.88,92.75]]},
     {"id":"SH-3 / Jorhat–Dibrugarh", "state":"Assam", "risk":22, "accessibility":78, "terrain":"Plains", "delay":"+12m", "incidents":1, "points":[[26.75,94.20],[27.47,94.91]]},
     {"id":"NH-102 / Imphal–Kakching", "state":"Manipur", "risk":28, "accessibility":70, "terrain":"Hills", "delay":"+20m", "incidents":1, "points":[[24.82,93.94],[24.60,93.98]]},
+    {"id":"NH-17 / Barpeta–Shillong detour", "state":"Assam", "risk":31, "accessibility":73, "terrain":"Plains", "delay":"+38m", "incidents":1, "is_alternate":True, "points":[[26.32,91.00],[25.95,91.45],[25.58,91.89]]},
+    {"id":"SH-9 / Bishnupur–Ukhrul", "state":"Manipur", "risk":34, "accessibility":67, "terrain":"Hills", "delay":"+42m", "incidents":1, "is_alternate":True, "points":[[24.63,93.77],[24.75,94.05],[24.82,93.94]]},
+    {"id":"SH-5 / Jowai–Nongstoin", "state":"Meghalaya", "risk":29, "accessibility":64, "terrain":"Hills", "delay":"+36m", "incidents":1, "is_alternate":True, "points":[[25.45,92.20],[25.55,91.95],[25.75,91.70]]},
+    {"id":"NH-61 / Mokokchung link", "state":"Nagaland", "risk":25, "accessibility":69, "terrain":"Hills", "delay":"+29m", "incidents":1, "is_alternate":True, "points":[[25.67,94.10],[26.00,94.52],[26.32,94.53]]},
+    {"id":"NH-54 / Serchhip link", "state":"Mizoram", "risk":33, "accessibility":55, "terrain":"Mountains", "delay":"+44m", "incidents":1, "is_alternate":True, "points":[[23.30,92.83],[23.55,92.95],[23.73,92.72]]},
 ]
 vehicles = [
     {"id":"V-014","state":"Assam","payload":"Medical supplies","status":"in-transit","eta":"02h 18m","route":"NH-27 / Guwahati–Silchar","position":[25.67,92.22],"type":"Cargo truck"},
@@ -79,8 +87,23 @@ async def root():
 
 @api_router.get("/overview")
 async def overview():
-    return {"states": states, "routes": routes, "vehicles": vehicles, "incidents": incidents,
+    enriched_vehicles = []
+    for vehicle in vehicles:
+        options = [route["id"] for route in routes if route["state"] == vehicle["state"]]
+        enriched_vehicles.append({**vehicle, "route_options": options})
+    return {"states": states, "routes": routes, "vehicles": enriched_vehicles, "incidents": incidents,
             "sync_time":"just now", "uptime":"99.98%", "calibration":{"accuracy":89,"confidence":0.84}}
+
+@api_router.post("/vehicles/{vehicle_id}/route")
+async def switch_vehicle_route(vehicle_id: str, switch: RouteSwitch):
+    vehicle = next((item for item in vehicles if item["id"] == vehicle_id), None)
+    route = next((item for item in routes if item["id"] == switch.route_id), None)
+    if not vehicle or not route or switch.route_id not in [item["id"] for item in routes if item["state"] == vehicle["state"]]:
+        return {"ok": False, "message": "Vehicle or route is not available"}
+    vehicle["route"] = route["id"]
+    vehicle["status"] = "rerouted"
+    vehicle["eta"] = route["delay"].replace("+", "") if route.get("is_alternate") else vehicle["eta"]
+    return {"ok": True, "vehicle": vehicle, "route": route, "message": f"{vehicle_id} switched to {route['id']}"}
 
 @api_router.post("/reports")
 async def create_report(report: FieldReport):
