@@ -11,6 +11,7 @@ import uuid
 from datetime import datetime, timezone
 
 from risk_model import calibrate as calibrate_risk, metrics as risk_metrics, train as train_risk_model
+from damage_cnn import classify as classify_damage, warmup as warmup_cnn
 
 
 ROOT_DIR = Path(__file__).parent
@@ -19,6 +20,9 @@ load_dotenv(ROOT_DIR / '.env')
 # Train the XGBoost calibration layer once at import time (~600ms) so every
 # /api/overview call is a cheap batch of predictions rather than a fresh fit.
 train_risk_model()
+# Load MobileNetV2 weights + a warm-up pass so the first field-photo request
+# doesn't pay a 1.5s cold start.
+warmup_cnn()
 
 # The demo keeps its GIS-shaped fixtures in memory so it starts with zero setup.
 # Production would swap this repository for PostGIS using the same response contract.
@@ -78,6 +82,7 @@ def _apply_calibration(route: dict) -> dict:
     route["calibrated_risk"] = calibrate_risk(
         route["risk"], route.get("rainfall", 50), route.get("wind", 18),
         route["terrain"], route["accessibility"], route["incidents"],
+        route.get("cnn_damage", 0.0),
     )
     return route
 vehicles = [
@@ -125,22 +130,34 @@ async def switch_vehicle_route(vehicle_id: str, switch: RouteSwitch):
 
 @api_router.post("/reports")
 async def create_report(report: FieldReport):
-    bump = 18 if report.severity == "High" else 10 if report.severity == "Medium" else 5
+    cnn = classify_damage(report.image_data)
+    # If the CNN classified an image, prefer its severity when it disagrees
+    # UPWARD with the reporter (stronger visual evidence wins).
+    severity_order = {"None": 0, "Low": 1, "Medium": 2, "High": 3}
+    effective_severity = report.severity
+    if cnn.get("used") and severity_order.get(cnn["severity"], 0) > severity_order.get(report.severity, 0):
+        effective_severity = cnn["severity"]
+    bump = 18 if effective_severity == "High" else 10 if effective_severity == "Medium" else 5
     target = next((route for route in routes if route["state"] == report.state), routes[0])
     target["risk"] = min(98, target["risk"] + bump)
     target["incidents"] += 1
     # A fresh incident on the ground usually correlates with heavier rainfall in the corridor.
-    target["rainfall"] = min(220, target.get("rainfall", 50) + (24 if report.severity == "High" else 14 if report.severity == "Medium" else 6))
+    target["rainfall"] = min(220, target.get("rainfall", 50) + (24 if effective_severity == "High" else 14 if effective_severity == "Medium" else 6))
+    # CNN evidence feeds directly into the calibration model as the 7th feature.
+    if cnn.get("used"):
+        target["cnn_damage"] = max(target.get("cnn_damage", 0.0), cnn["score"])
     _apply_calibration(target)
-    incidents.insert(0, {"state": report.state, "type": report.incident_type, "severity": report.severity,
+    incidents.insert(0, {"state": report.state, "type": report.incident_type, "severity": effective_severity,
                          "time": "just now", "location": [report.latitude, report.longitude]})
     for vehicle in vehicles:
         if vehicle["state"] == report.state and vehicle["status"] != "delivered":
             vehicle["status"] = "rerouted"
             vehicle["eta"] = "03h 08m"
+    cnn_note = f" · CNN saw '{cnn['top_classes'][0]['label']}' → {cnn['severity']} ({cnn['score']})" if cnn.get("used") else ""
     return {"ok": True, "report_id": str(uuid.uuid4()), "route": target,
-            "alert": f"{target['id']} risk increased to {target['risk']} (calibrated {target['calibrated_risk']}) — 2 vehicles rerouted",
-            "classification": report.severity, "synced": False}
+            "alert": f"{target['id']} risk increased to {target['risk']} (calibrated {target['calibrated_risk']}) — 2 vehicles rerouted{cnn_note}",
+            "classification": effective_severity, "reported_severity": report.severity,
+            "cnn": cnn, "synced": False}
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):

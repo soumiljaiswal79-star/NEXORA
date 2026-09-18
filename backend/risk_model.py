@@ -28,6 +28,7 @@ FEATURE_NAMES = [
     "terrain",
     "accessibility",
     "incidents",
+    "cnn_damage",
 ]
 
 _STATE = {"model": None, "metrics": None}
@@ -42,17 +43,23 @@ def _synthesise(n: int = 900, seed: int = 7) -> tuple[np.ndarray, np.ndarray]:
     terrain = rng.integers(0, 3, n)
     accessibility = rng.uniform(30, 90, n)
     incidents = rng.poisson(1.8, n).clip(0, 8)
+    # CNN damage score correlates weakly with rainfall + incidents (a wet, damaged
+    # corridor is more likely to yield a strong damage photo) plus its own noise.
+    cnn_damage = (0.55 * rainfall / 220.0 * 100
+                  + 6.0 * incidents
+                  + rng.normal(0, 12, n)).clip(0, 100)
     terrain_w = np.vectorize(TERRAIN_WEIGHT.get)(terrain)
     # Ground truth = physically motivated blend + noise, clipped to [0, 100].
     true_risk = (
-        0.55 * rule_risk
-        + 0.18 * rainfall * terrain_w / 2.2
+        0.50 * rule_risk
+        + 0.16 * rainfall * terrain_w / 2.2
         + 0.9 * wind * terrain_w / 5.0
-        + 3.8 * incidents * terrain_w
-        - 0.32 * (accessibility - 60)
+        + 3.5 * incidents * terrain_w
+        - 0.30 * (accessibility - 60)
+        + 0.18 * cnn_damage * terrain_w
         + rng.normal(0, 4.0, n)
     ).clip(0, 100)
-    x = np.column_stack([rule_risk, rainfall, wind, terrain, accessibility, incidents])
+    x = np.column_stack([rule_risk, rainfall, wind, terrain, accessibility, incidents, cnn_damage])
     return x, true_risk
 
 
@@ -89,18 +96,18 @@ def train() -> dict:
         "feature_importance": {name: round(float(imp), 3) for name, imp in zip(FEATURE_NAMES, importances)},
         "training_samples": int(len(x_train)),
         "test_samples": int(len(x_test)),
-        "version": "xgb-0.9.1",
+        "version": "xgb-1.0.0",
     }
     return _STATE["metrics"]
 
 
-def calibrate(rule_risk: float, rainfall: float, wind: float, terrain: str, accessibility: float, incidents: int) -> float:
+def calibrate(rule_risk: float, rainfall: float, wind: float, terrain: str, accessibility: float, incidents: int, cnn_damage: float = 0.0) -> float:
     """Return the learned calibrated risk (0-100) for a single route segment."""
     model = _STATE["model"]
     if model is None:
         train()
         model = _STATE["model"]
-    features = np.array([[rule_risk, rainfall, wind, TERRAIN_CODE.get(terrain, 1), accessibility, incidents]])
+    features = np.array([[rule_risk, rainfall, wind, TERRAIN_CODE.get(terrain, 1), accessibility, incidents, cnn_damage]])
     pred = float(model.predict(features)[0])
     return round(max(0.0, min(100.0, pred)), 1)
 
