@@ -104,7 +104,7 @@ incidents = [
 # Add your routes to the router instead of directly to app
 @api_router.get("/")
 async def root():
-    return {"message": "NE-LOGIX API online", "mode": "demo"}
+    return {"message": "NEXORA API online", "mode": "demo"}
 
 @api_router.get("/overview")
 async def overview():

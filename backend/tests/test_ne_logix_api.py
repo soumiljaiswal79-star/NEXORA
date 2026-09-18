@@ -47,7 +47,7 @@ def _noisy_jpeg_b64():
 def test_root():
     r = requests.get(f"{BASE_URL}/api/", timeout=15)
     assert r.status_code == 200
-    assert r.json().get("message") == "NE-LOGIX API online"
+    assert r.json().get("message") == "NEXORA API online"
 
 
 # --- /api/overview contract (existing) --------------------------------------

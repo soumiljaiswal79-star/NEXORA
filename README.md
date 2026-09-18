@@ -1,6 +1,6 @@
-# NE—LOGIX
+# NEXORA
 
-NE—LOGIX is a demo-ready Smart Logistics & Accessibility Intelligence dashboard for India’s North Eastern Region.
+NEXORA is a demo-ready Smart Logistics & Accessibility Intelligence dashboard for India’s North Eastern Region.
 
 ## Run
 
